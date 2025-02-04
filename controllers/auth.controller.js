@@ -51,6 +51,7 @@ function generateToken(user) {
 
 exports.register = async (req, res) => {
     const { fullname, birthday, username, email, password } = req.body;
+    
     try {
         let user = await User.findOne({ email });
         if (user) {
@@ -58,6 +59,7 @@ exports.register = async (req, res) => {
         }
 
         user = new User({ fullname, birthday, username, email, password: password });
+        user.password = await bcrypt.hash(password, 10);
         await user.save();
 
         const token = generateToken(user);
