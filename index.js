@@ -8,6 +8,8 @@ const leaderRoute = require('./routes/leaderboard.route.js');
 
 dotenv.config();
 
+//i liek banana 
+
 const app = express();
 
 // Middleware
