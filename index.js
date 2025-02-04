@@ -9,7 +9,7 @@ const leaderRoute = require('./routes/leaderboard.route.js');
 dotenv.config();
 
 //testing heheheehe
-
+//hi
 const app = express();
 
 // Middleware
