@@ -8,8 +8,6 @@ const leaderRoute = require('./routes/leaderboard.route.js');
 
 dotenv.config();
 
-//i like apples
-
 const app = express();
 
 // Middleware
