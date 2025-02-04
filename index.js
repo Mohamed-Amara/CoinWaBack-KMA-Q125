@@ -34,4 +34,4 @@ mongoose.connect("mongodb+srv://admin:CoinWa123@cluster0.w95iu.mongodb.net/?retr
 })
 .catch((error) => {
     console.error("Connection failed!", error);
-});
+}); 
