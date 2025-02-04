@@ -16,7 +16,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/users', userRoute);
-app.use('/api/leaderboard', leaderRoute);
+app.use('/api/leaderboard', leaderRoute); 
 app.use('/api/auth', authRoute);
 
 app.get('/', (req, res) => {
