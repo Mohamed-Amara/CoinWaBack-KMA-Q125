@@ -1,0 +1,31 @@
+{
+  "name": "coinwa-backend",
+  "version": "1.0.0",
+  "description": "This is the backend to the CoinWa Financial literacy app. It will use node.js, express.js and mongoDB",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "moment": "^2.30.1",
+    "mongodb": "^6.8.0",
+    "mongoose": "^8.4.4",
+    "node-cron": "^3.0.3",
+    "redi": "^0.1.0",
+    "redis": "^4.6.15"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
