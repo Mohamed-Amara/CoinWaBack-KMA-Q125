@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
     res.send('Hello from Node API Server');
 });
 
-mongoose.connect("mongodb+srv://naimahziaa:Coinwa123@coinwa.oalwm.mongodb.net/?retryWrites=true&w=majority&appName=Coinwa")
+mongoose.connect("mongodb+srv://admin:CoinWa123@cluster0.w95iu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 .then(() => {
     console.log("Connected to database!");
     app.listen(3000, '0.0.0.0', () => {
