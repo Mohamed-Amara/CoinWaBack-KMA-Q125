@@ -5,21 +5,28 @@ const cors = require('cors');
 const userRoute = require('./routes/user.route.js');
 const authRoute = require('./routes/auth.route.js');
 const leaderRoute = require('./routes/leaderboard.route.js');
+// const forgotPasswordRoutes = require('./controllers/forgotPassword.controller');
+const forgotPasswordRoute = require('./routes/forgotPassword.routes.js');
 
 dotenv.config();
-
-//testing heheheehe
 
 const app = express();
 
 // Middleware
 app.use(cors());
+// app.use(cors({
+//     origin: '*',  // Allow all origins (only for development)
+//     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//     allowedHeaders: ['Content-Type', 'Authorization']
+// }));
 app.use(express.json());
 
 // Routes
 app.use('/api/users', userRoute);
-app.use('/api/leaderboard', leaderRoute);
+app.use('/api/leaderboard', leaderRoute); 
 app.use('/api/auth', authRoute);
+// app.use('/auth', forgotPasswordRoutes);
+app.use('/api/password', forgotPasswordRoute);
 
 app.get('/', (req, res) => {
     res.send('Hello from Node API Server');
@@ -34,4 +41,4 @@ mongoose.connect("mongodb+srv://admin:CoinWa123@cluster0.w95iu.mongodb.net/?retr
 })
 .catch((error) => {
     console.error("Connection failed!", error);
-});
+}); 
