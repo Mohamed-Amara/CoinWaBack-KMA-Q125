@@ -8,8 +8,8 @@ const resetTokens = {}; // Temporary storage for verification codes
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'coinwa0355@gmail.com',
-        pass: 'htpasqsfacolkyju'
+        user: 'noreplycoinwa@gmail.com',
+        pass: 'vpvu nsgc zttd raxm'
     }
 });
 
@@ -34,7 +34,7 @@ const forgotPassword = async (req, res) => {
     await transporter.sendMail({
         from: 'coinwa0355@gmail.com',
         to: email,
-        subject: 'Password Reset Code',
+        subject: `CoinWa Password Reset Code: ${code}`,
         text: `Your password reset code is: ${code}`
     });
 
