@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const argon2 = require('argon2');
 
 const initializeIncorrectQuestions = () => Array.from({ length: 9 }, () => []);
 
@@ -81,14 +81,66 @@ const UserSchema = mongoose.Schema(
     }
 );
 
-// Password hashing before saving the user
-UserSchema.pre('save', async function(next) {
+// // Password hashing before saving the user
+// UserSchema.pre('save', async function(next) {
+//     if (!this.isModified('password')) {
+//         console.log("🔄 Password not modified, skipping re-hashing...");
+//         return next();
+//     }
+
+//     try {
+//         console.log("🔑 Hashing password before saving...");
+//         const hashedPassword = await argon2.hash(this.password, {
+//             type: argon2.argon2id,
+//             memoryCost: 2 ** 16,   // 64MB RAM usage
+//             timeCost: 3,           // 3 iterations
+//             parallelism: 2,        // 2 threads
+//         });
+
+//         console.log("✅ Password hashed successfully:", hashedPassword);
+//         this.password = hashedPassword;
+//         next();
+//     } catch (error) {
+//         console.error("❌ Error hashing password:", error);
+//         next(error);
+//     }
+// });
+
+// const User = mongoose.model("User", UserSchema);
+
+// module.exports = User;
+
+
+// const mongoose = require('mongoose');
+// const argon2 = require('argon2');
+
+// const UserSchema = mongoose.Schema(
+//     {
+//         fullname: { type: String, required: true },
+//         birthday: { type: Date, required: true },
+//         username: { type: String, required: true, unique: true },
+//         email: { type: String, required: true, unique: true },
+//         password: { type: String, required: true },
+//         tokenVersion: { type: Number, default: 0 },
+//     },
+//     { timestamps: true }
+// );
+
+// Ensure password is hashed **only if it's new or modified**
+UserSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    
+    console.log("🔍 Hashing password before saving...");
+    this.password = await argon2.hash(this.password, {
+        type: argon2.argon2id,
+        memoryCost: 2 ** 16,
+        timeCost: 3,
+        parallelism: 2,
+    });
+
+    console.log("✅ Password hashed successfully:", this.password);
     next();
 });
 
 const User = mongoose.model("User", UserSchema);
-
 module.exports = User;
