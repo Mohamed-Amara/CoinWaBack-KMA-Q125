@@ -1,5 +1,5 @@
 const User = require('../models/user.model.js');
-const bcrypt = require('bcrypt');
+// const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
 const moment = require('moment');
 
@@ -49,49 +49,68 @@ function generateToken(user) {
     );
 }
 
+const argon2 = require('argon2');
+
 exports.register = async (req, res) => {
     const { fullname, birthday, username, email, password } = req.body;
-    
+
     try {
         let user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ msg: 'User already exists' });
         }
 
-        user = new User({ fullname, birthday, username, email, password: password });
-        user.password = await bcrypt.hash(password, 10);
+        console.log("🔍 Creating new user...");
+        user = new User({ fullname, birthday, username, email, password });
+
         await user.save();
+
+        console.log("✅ User saved in MongoDB!");
+        console.log("✅ Final stored hash:", user.password);
 
         const token = generateToken(user);
         res.json({ token });
 
     } catch (err) {
-        console.error(err.message);
+        console.error("❌ Registration Error:", err.message);
         res.status(500).send('Server error');
     }
 };
 
 
+
+
 exports.login = async (req, res) => {
     const { email, password } = req.body;
+
     try {
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(400).json({ msg: 'Invalid credentials' });
-      }
-  
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ msg: 'Invalid credentials' });
-      }
-  
-      const token = generateToken(user);
-      res.status(200).json({ token });
+        const user = await User.findOne({ email });
+        if (!user) {
+            console.log("❌ User not found:", email);
+            return res.status(400).json({ msg: "Invalid credentials" });
+        }
+
+        console.log("✅ User found:", user.email);
+        console.log("🔒 Stored Hash from DB:", user.password);
+        console.log("🔑 Entered Password:", password);
+
+        console.log("🔍 Verifying password with Argon2...");
+        const isMatch = await argon2.verify(user.password, password.trim());
+        console.log("🔍 Password Match:", isMatch);
+
+        if (!isMatch) {
+            console.log("❌ Incorrect password for:", user.email);
+            return res.status(400).json({ msg: "Invalid credentials" });
+        }
+
+        const token = generateToken(user);
+        res.status(200).json({ token });
+
     } catch (err) {
-      console.error(err.message);
-      res.status(500).json({ msg: 'Server error' });
+        console.error("❌ Login Error:", err.message);
+        res.status(500).json({ msg: "Server error" });
     }
-  };
+};
 
   exports.logout = async (req, res) => {
     try {
@@ -104,3 +123,26 @@ exports.login = async (req, res) => {
     }
   };
   
+  exports.updateProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ msg: "User not found" });
+        }
+
+        // 🚨 Remove password from req.body to prevent accidental updates
+        if (req.body.password) {
+            delete req.body.password;
+            console.log("🚨 Attempt to modify password blocked!");
+        }
+
+        Object.assign(user, req.body);
+        await user.save();
+
+        res.json(user);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+};
