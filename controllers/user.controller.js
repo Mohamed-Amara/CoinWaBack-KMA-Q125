@@ -12,11 +12,8 @@ exports.getUserProfile = async (req, res) => {
 };
 
 exports.updateUserProfile = async (req, res) => {
-    const { badges, lives, coins, progress, nextLifeRegeneration, followers, following, profilepic} = req.body;
-
-    // Construct the update object
+    const { badges, lives, coins, progress, nextLifeRegeneration, followers, following, profilepic } = req.body;
     const update = {};
-
 
     if (progress) {
         if (progress.sublevel !== undefined) update['progress.sublevel'] = progress.sublevel;
@@ -28,13 +25,13 @@ exports.updateUserProfile = async (req, res) => {
     if (lives !== undefined) update.lives = lives;
     if (coins !== undefined) update.coins = coins;
     if (profilepic !== undefined) update.profilepic = profilepic;
-    if (followers){
-        if(followers.followerAmount !== undefined) update["followers.followerAmount"] = followers.followerAmount;
-        if(followers.followerAccounts !== undefined) update["followers.followerAccounts"] = followers.followerAccounts;
+    if (followers) {
+        if (followers.followerAmount !== undefined) update["followers.followerAmount"] = followers.followerAmount;
+        if (followers.followerAccounts !== undefined) update["followers.followerAccounts"] = followers.followerAccounts;
     }
-    if (following){
-        if(following.followingAmount !== undefined) update["following.followingAmount"] = following.followingAmount;
-        if(following.followingAccounts !== undefined) update["following.followingAccounts"] = following.followingAccounts;
+    if (following) {
+        if (following.followingAmount !== undefined) update["following.followingAmount"] = following.followingAmount;
+        if (following.followingAccounts !== undefined) update["following.followingAccounts"] = following.followingAccounts;
     }
 
     try {
@@ -49,6 +46,7 @@ exports.updateUserProfile = async (req, res) => {
     }
 };
 
+// CRON job to regenerate lives
 cron.schedule('* * * * *', async () => {
     try {
         const users = await User.find({
@@ -59,13 +57,12 @@ cron.schedule('* * * * *', async () => {
         users.forEach(async (user) => {
             user.lives += 1;
             if (user.lives < 4) {
-                user.nextLifeRegeneration = new Date(Date.now() + 30 * 1000); // Set next regeneration in 1 minute
+                user.nextLifeRegeneration = new Date(Date.now() + 30 * 1000); // Set next regeneration in 30 seconds
             } else {
-                user.nextLifeRegeneration = null; // No regeneration needed
+                user.nextLifeRegeneration = null;
             }
-            user.lastLifeRegeneration = new Date(); // Update last regeneration time
+            user.lastLifeRegeneration = new Date();
             await user.save();
-          
         });
     } catch (err) {
         console.error('Error in cron job:', err.message);
@@ -75,30 +72,27 @@ cron.schedule('* * * * *', async () => {
 exports.getUserByIds = async (req, res) => {
     try {
         const userIds = req.body.userIds;
-        const users = await User.find({ _id: { $in: userIds } }, 'username fullname profilepic followers following'); // Fetch required fields only
+        const users = await User.find({ _id: { $in: userIds } }, 'username fullname profilepic followers following');
         res.status(200).json(users);
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
     }
-}
+};
 
 exports.getEveryID = async (req, res) => {
     try {
-        const users = await User.find({}, '_id'); // Fetch ID only
-        const ids = users.map(User => User._id)
+        const users = await User.find({}, '_id');
+        const ids = users.map(user => user._id);
         res.status(200).json(ids);
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
     }
-}
+};
 
 exports.updateOtherUser = async (req, res) => {
-
-    const user = await User.findById(req.body._id).select('-password'); // Exclude password
-
+    const user = await User.findById(req.body._id).select('-password');
     if (!user) {
-        console.log('User not found');
-        return res.status(404).json({ message: 'User not found' }); // Handle user not found
+        return res.status(404).json({ message: 'User not found' });
     }
 
     user.followers.followerAccounts.push(req.user.id);
@@ -106,20 +100,64 @@ exports.updateOtherUser = async (req, res) => {
 
     await user.save();
     res.status(200).json({ message: 'Other User updated successfully', user });
-}
+};
 
 exports.updateBadges = async (req, res) => {
-
     const user = await User.findById(req.user.id);
-
     if (!user) {
-        console.log('User not found');
-        return res.status(404).json({ message: 'User not found' }); // Handle user not found
+        return res.status(404).json({ message: 'User not found' });
     }
 
-    if (!user.badges.includes(req.body.badge)){
+    if (!user.badges.includes(req.body.badge)) {
         user.badges.push(req.body.badge);
     }
     await user.save();
-    res.status(200).json({ message: 'Other User updated successfully', user });
-}
+    res.status(200).json({ message: 'Badges updated successfully', user });
+};
+
+// Save questionnaire responses
+exports.saveQuestionnaireResponses = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { responses } = req.body;  // Expecting { question1: "answer1", question2: "answer2", ... }
+        console.log("in here");
+        // Print the incoming responses to check their structure
+        console.log(responses);
+        console.log(typeof(responses));
+        console.log(userId);
+        console.log(typeof(userId));
+
+        // Validate that responses is an object
+        if (!responses || typeof responses !== 'object') {
+            return res.status(400).json({ msg: 'Invalid responses format. It should be an object.' });
+        }
+
+        // Check if question2 is an array and handle it
+        if (responses.question2 && Array.isArray(responses.question2)) {
+            console.log("question2 is an array, value:", responses.question2);
+            responses.question2 = responses.question2[0];  // Or handle the array differently
+        }
+
+        // Print the responses after modification
+        console.log("Modified responses:", responses);
+
+        // Find the user and update their questionnaire responses
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { $set: { questionnaireResponses: responses } },
+            { new: true }
+        );
+
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+
+        // Respond with a success message
+        res.status(200).json({ msg: 'Responses saved successfully', user });
+    } catch (error) {
+        console.error('Error saving questionnaire responses:', error);
+        res.status(500).json({ msg: 'Server error', error });
+    }
+};
+
+

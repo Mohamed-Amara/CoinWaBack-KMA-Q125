@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const argon2 = require('argon2');
 
 const initializeIncorrectQuestions = () => Array.from({ length: 9 }, () => []);
 
@@ -36,6 +36,11 @@ const UserSchema = mongoose.Schema(
             default: 4
         },
         badges: [{ type: String }],
+        questionnaireResponses: {
+            type: Map,
+            of: String,  // or any other type depending on your data (e.g., Boolean, Number, etc.)
+            default: {}
+        },
         progress: {
             currentLevel: { type: Number, default: 1 },
             sublevel: {type: Number, default: 1},
@@ -80,15 +85,20 @@ const UserSchema = mongoose.Schema(
         timestamps: true
     }
 );
-
-// Password hashing before saving the user
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    
+    console.log("🔍 Hashing password before saving...");
+    this.password = await argon2.hash(this.password, {
+        type: argon2.argon2id,
+        memoryCost: 2 ** 16,
+        timeCost: 3,
+        parallelism: 2,
+    });
+
+    console.log("✅ Password hashed successfully:", this.password);
     next();
 });
 
 const User = mongoose.model("User", UserSchema);
-
 module.exports = User;
