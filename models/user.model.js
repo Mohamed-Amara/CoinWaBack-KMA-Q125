@@ -36,6 +36,11 @@ const UserSchema = mongoose.Schema(
             default: 4
         },
         badges: [{ type: String }],
+        questionnaireResponses: {
+            type: Map,
+            of: String,  // or any other type depending on your data (e.g., Boolean, Number, etc.)
+            default: {}
+        },
         progress: {
             currentLevel: { type: Number, default: 1 },
             sublevel: {type: Number, default: 1},
