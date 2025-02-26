@@ -112,64 +112,6 @@ function generateToken(user) {
     );
 }
 
-// const argon2 = require('argon2');
-// const tempUsers = new Map(); // Temporary storage for unverified users (use Redis for production)
-
-// // Function to generate a 6-digit verification code
-// const generateVerificationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
-
-// // Function to send the verification email
-// const sendVerificationEmail = async (email, code) => {
-//     const transporter = nodemailer.createTransport({
-//         service: 'gmail',
-//         auth: {
-//             user: 'noreplycoinwa@gmail.com',
-//             pass: 'vpvu nsgc zttd raxm'
-//         }
-//     });
-
-//     const mailOptions = {
-//         from: 'noreplycoinwa@gmail.com',
-//         to: email,
-//         subject: "Your Verification Code",
-//         text: `Your verification code is: ${code}. It expires in 10 minutes.`,
-//     };
-
-//     try {
-//         await transporter.sendMail(mailOptions);
-//         console.log(`📩 Verification code sent to ${email}`);
-//     } catch (error) {
-//         console.error("❌ Email sending error:", error);
-//     }
-// };
-
-// // Register route handler
-// exports.register = async (req, res) => {
-//     const { fullname, birthday, username, email, password } = req.body;
-
-//     try {
-//         let user = await User.findOne({ email });
-//         if (user) {
-//             return res.status(400).json({ msg: 'User already exists' });
-//         }
-
-//         console.log("🔍 Generating verification code...");
-//         const verificationCode = generateVerificationCode();
-
-//         // Temporarily store user details mapped by email
-//         tempUsers.set(email, { fullname, birthday, username, email, password, verificationCode });
-
-//         // Send verification email
-//         await sendVerificationEmail(email, verificationCode);
-
-//         res.json({ msg: "Verification code sent to your email." });
-
-//     } catch (err) {
-//         console.error("❌ Registration Error:", err.message);
-//         res.status(500).send('Server error');
-//     }
-// };
-
 // Verify email route handler
 exports.verifyEmail = async (req, res) => {
     const { email, code } = req.body;
