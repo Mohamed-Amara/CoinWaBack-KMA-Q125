@@ -1,7 +1,70 @@
 const User = require('../models/user.model.js');
-// const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
 const moment = require('moment');
+const nodemailer = require("nodemailer");
+const argon2 = require('argon2');
+
+// Function to generate a 6-digit verification code
+const generateVerificationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+// Function to send the verification email
+const sendVerificationEmail = async (email, code) => {
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'noreplycoinwa@gmail.com',
+            pass: 'vpvu nsgc zttd raxm' // Replace this with a secure method (e.g., env variables)
+        }
+    });
+
+    const mailOptions = {
+        from: 'noreplycoinwa@gmail.com',
+        to: email,
+        subject: "Your Verification Code",
+        text: `Your verification code is: ${code}. It expires in 10 minutes.`,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`📩 Verification code sent to ${email}`);
+    } catch (error) {
+        console.error("❌ Email sending error:", error);
+    }
+};
+
+// ✅ New Register Route (No temp storage)
+exports.register = async (req, res) => {
+    const { fullname, birthday, username, email, password } = req.body;
+
+    try {
+        let user = await User.findOne({ email });
+        if (user) return res.status(400).json({ msg: 'User already exists' });
+
+        console.log("🔍 Generating verification code...");
+        const verificationCode = generateVerificationCode();
+
+        const newUser = new User({
+            fullname,
+            birthday,
+            username,
+            email,
+            password, // Auto-hashed in `pre('save')`
+            verificationCode,
+            verificationExpires: Date.now() + 10 * 60 * 1000 // 10-minute expiry
+        });
+
+        await newUser.save();
+
+        await sendVerificationEmail(email, verificationCode);
+
+        res.json({ msg: "Verification code sent to your email." });
+
+    } catch (err) {
+        console.error("❌ Registration Error:", err.message);
+        res.status(500).send('Server error');
+    }
+};
+
 
 exports.updateStreak = async (req, res) => {
     try {
@@ -49,37 +112,107 @@ function generateToken(user) {
     );
 }
 
-const argon2 = require('argon2');
+// const argon2 = require('argon2');
+// const tempUsers = new Map(); // Temporary storage for unverified users (use Redis for production)
 
-exports.register = async (req, res) => {
-    const { fullname, birthday, username, email, password } = req.body;
+// // Function to generate a 6-digit verification code
+// const generateVerificationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+// // Function to send the verification email
+// const sendVerificationEmail = async (email, code) => {
+//     const transporter = nodemailer.createTransport({
+//         service: 'gmail',
+//         auth: {
+//             user: 'noreplycoinwa@gmail.com',
+//             pass: 'vpvu nsgc zttd raxm'
+//         }
+//     });
+
+//     const mailOptions = {
+//         from: 'noreplycoinwa@gmail.com',
+//         to: email,
+//         subject: "Your Verification Code",
+//         text: `Your verification code is: ${code}. It expires in 10 minutes.`,
+//     };
+
+//     try {
+//         await transporter.sendMail(mailOptions);
+//         console.log(`📩 Verification code sent to ${email}`);
+//     } catch (error) {
+//         console.error("❌ Email sending error:", error);
+//     }
+// };
+
+// // Register route handler
+// exports.register = async (req, res) => {
+//     const { fullname, birthday, username, email, password } = req.body;
+
+//     try {
+//         let user = await User.findOne({ email });
+//         if (user) {
+//             return res.status(400).json({ msg: 'User already exists' });
+//         }
+
+//         console.log("🔍 Generating verification code...");
+//         const verificationCode = generateVerificationCode();
+
+//         // Temporarily store user details mapped by email
+//         tempUsers.set(email, { fullname, birthday, username, email, password, verificationCode });
+
+//         // Send verification email
+//         await sendVerificationEmail(email, verificationCode);
+
+//         res.json({ msg: "Verification code sent to your email." });
+
+//     } catch (err) {
+//         console.error("❌ Registration Error:", err.message);
+//         res.status(500).send('Server error');
+//     }
+// };
+
+// Verify email route handler
+exports.verifyEmail = async (req, res) => {
+    const { email, code } = req.body;
 
     try {
-        let user = await User.findOne({ email });
-        if (user) {
-            return res.status(400).json({ msg: 'User already exists' });
+        const user = await User.findOne({ email });
+
+        if (!user) return res.status(400).json({ msg: 'User not found.' });
+        if (user.isVerified) return res.status(400).json({ msg: 'User is already verified.' });
+
+        // Check verification code and expiration
+        if (user.verificationCode !== code) {
+            return res.status(400).json({ msg: 'Invalid verification code.' });
         }
 
-        console.log("🔍 Creating new user...");
-        user = new User({ fullname, birthday, username, email, password });
+        if (Date.now() > user.verificationExpires) {
+            return res.status(400).json({ msg: 'Verification code expired. Please request a new one.' });
+        }
 
+        user.isVerified = true;
+        user.verificationCode = undefined;
+        user.verificationExpires = undefined;
         await user.save();
 
-        console.log("✅ User saved in MongoDB!");
-        console.log("✅ Final stored hash:", user.password);
+        const token = jwt.sign(
+            { id: user._id, tokenVersion: user.tokenVersion },
+            process.env.JWT_SECRET,
+            { expiresIn: '30d' }
+        );
 
-        const token = generateToken(user);
-        res.json({ token });
+        res.status(200).json({
+            msg: 'Verification successful! You can now log in.',
+            token,
+        });
 
     } catch (err) {
-        console.error("❌ Registration Error:", err.message);
-        res.status(500).send('Server error');
+        console.error('❌ Verification Error:', err.message);
+        res.status(500).json({ msg: 'Server error' });
     }
 };
 
 
-
-
+// Login route handler
 exports.login = async (req, res) => {
     const { email, password } = req.body;
 
@@ -92,7 +225,7 @@ exports.login = async (req, res) => {
 
         console.log("✅ User found:", user.email);
         console.log("🔒 Stored Hash from DB:", user.password);
-        console.log("🔑 Entered Password:", password);
+        console.log("🔑 Entered Password (trimmed):", password.trim());
 
         console.log("🔍 Verifying password with Argon2...");
         const isMatch = await argon2.verify(user.password, password.trim());
