@@ -35,9 +35,10 @@ const sendVerificationEmail = async (email, code) => {
 // ✅ New Register Route (No temp storage)
 exports.register = async (req, res) => {
     const { fullname, birthday, username, email, password } = req.body;
+    const lowercasedEmail = email.toLowerCase();
 
     try {
-        let user = await User.findOne({ email });
+        let user = await User.findOne({ email: lowercasedEmail });
         if (user) return res.status(400).json({ msg: 'User already exists' });
 
         console.log("🔍 Generating verification code...");
@@ -47,7 +48,7 @@ exports.register = async (req, res) => {
             fullname,
             birthday,
             username,
-            email,
+            lowercasedEmail,
             password, // Auto-hashed in `pre('save')`
             verificationCode,
             verificationExpires: Date.now() + 10 * 60 * 1000 // 10-minute expiry
@@ -55,7 +56,7 @@ exports.register = async (req, res) => {
 
         await newUser.save();
 
-        await sendVerificationEmail(email, verificationCode);
+        await sendVerificationEmail(lowercasedEmail, verificationCode);
 
         res.json({ msg: "Verification code sent to your email." });
 
@@ -115,9 +116,10 @@ function generateToken(user) {
 // Verify email route handler
 exports.verifyEmail = async (req, res) => {
     const { email, code } = req.body;
+    const lowercaedEmail = email.toLowerCase();
 
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: lowercasedEmail });
 
         if (!user) return res.status(400).json({ msg: 'User not found.' });
         if (user.isVerified) return res.status(400).json({ msg: 'User is already verified.' });
@@ -157,9 +159,10 @@ exports.verifyEmail = async (req, res) => {
 // Login route handler
 exports.login = async (req, res) => {
     const { email, password } = req.body;
+    const lowercasedEmail = email.toLowerCase();
 
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: lowercasedEmail });
         if (!user) {
             console.log("❌ User not found:", email);
             return res.status(400).json({ msg: "Invalid credentials" });
