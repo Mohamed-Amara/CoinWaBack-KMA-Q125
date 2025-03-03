@@ -79,6 +79,10 @@ const UserSchema = mongoose.Schema(
             type: Number,
             default: 0
         },
+        streakDays:{
+            type:[Boolean],
+            default: [false, false, false, false, false, false, false]
+        },
         tokenVersion: { type: Number, default: 0 } 
     },
     {
