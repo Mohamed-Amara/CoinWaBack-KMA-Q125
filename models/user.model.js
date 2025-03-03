@@ -32,6 +32,10 @@ const UserSchema = mongoose.Schema(
         nextLifeRegeneration: { type: Date, default: function () { return new Date(Date.now() + 60 * 1000); } },
         lastlogin: { type: Date, default: Date.now },
         loginStreak: { type: Number, default: 0 },
+        streakDays:{
+            type:[Boolean],
+            default: [false, false, false, false, false, false, false]
+        },
         tokenVersion: { type: Number, default: 0 }
     },
     { timestamps: true }
