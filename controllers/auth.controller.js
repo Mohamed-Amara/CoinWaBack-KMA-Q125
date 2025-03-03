@@ -81,6 +81,20 @@ exports.updateStreak = async (req, res) => {
         const yesterday = moment().subtract(1, 'days').startOf('day');
         const lastLogin = moment(user.lastlogin).startOf('day');;
 
+        // Get today's index (Monday = 0, Sunday = 6)
+        let todayIndex = today.isoWeekday() - 1;
+        if (todayIndex === -1) todayIndex = 6; // Adjust for Sunday being the last index
+
+        let streakDays = user.streakDays || [false, false, false, false, false, false, false];
+
+        if (todayIndex === 0 && !lastLogin.isSame(today, 'week')) {
+            console.log('New week detected, resetting streakDays');
+            streakDays = [false, false, false, false, false, false, false];
+        }
+
+        streakDays[todayIndex] = true;
+        user.streakDays = streakDays;
+
 
         if (lastLogin.isSame(today, 'day')) {
             console.log('User already logged in today');
