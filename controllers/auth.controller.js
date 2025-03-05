@@ -48,7 +48,7 @@ exports.register = async (req, res) => {
             fullname,
             birthday,
             username,
-            lowercasedEmail,
+            email: lowercasedEmail,
             password, // Auto-hashed in `pre('save')`
             verificationCode,
             verificationExpires: Date.now() + 10 * 60 * 1000 // 10-minute expiry
@@ -57,6 +57,7 @@ exports.register = async (req, res) => {
         await newUser.save();
 
         await sendVerificationEmail(lowercasedEmail, verificationCode);
+        console.log("Verification code: ", verificationCode);
 
         res.json({ msg: "Verification code sent to your email." });
 
@@ -130,7 +131,7 @@ function generateToken(user) {
 // Verify email route handler
 exports.verifyEmail = async (req, res) => {
     const { email, code } = req.body;
-    const lowercaedEmail = email.toLowerCase();
+    const lowercasedEmail = email.toLowerCase();
 
     try {
         const user = await User.findOne({ email: lowercasedEmail });
