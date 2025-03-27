@@ -32,10 +32,11 @@ app.get('/', (req, res) => {
     res.send('Hello from Node API Server');
 });
 
-mongoose.connect("mongodb+srv://admin:CoinWa123@cluster0.w95iu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+mongoose.connect(process.env.MONGO_URI)
 .then(() => {
     console.log("Connected to database!");
-    app.listen(3000, '0.0.0.0', () => {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, '0.0.0.0', () => {
         console.log("Server is running on port 3000");
     });
 })
