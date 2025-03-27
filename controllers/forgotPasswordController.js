@@ -8,8 +8,8 @@ const resetTokens = {}; // Temporary storage for verification codes
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'noreplycoinwa@gmail.com',
-        pass: 'vpvu nsgc zttd raxm'
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
 
@@ -18,7 +18,6 @@ const forgotPassword = async (req, res) => {
     const { email } = req.body;
     const lowercasedEmail = email.toLowerCase();
     const user = await User.findOne({ email: lowercasedEmail });
-    console.log("connected");
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -26,7 +25,7 @@ const forgotPassword = async (req, res) => {
     resetTokens[lowercasedEmail] = code;
 
     await transporter.sendMail({
-        from: 'coinwa0355@gmail.com',
+        from: process.env.EMAIL_USER,
         to: lowercasedEmail,
         subject: `CoinWa Password Reset Code: ${code}`,
         text: `Your password reset code is: ${code}`
