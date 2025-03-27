@@ -120,12 +120,6 @@ exports.saveQuestionnaireResponses = async (req, res) => {
     try {
         const userId = req.user.id;
         const { responses } = req.body;  // Expecting { question1: "answer1", question2: "answer2", ... }
-        console.log("in here");
-        // Print the incoming responses to check their structure
-        console.log(responses);
-        console.log(typeof(responses));
-        console.log(userId);
-        console.log(typeof(userId));
 
         // Validate that responses is an object
         if (!responses || typeof responses !== 'object') {
@@ -134,12 +128,8 @@ exports.saveQuestionnaireResponses = async (req, res) => {
 
         // Check if question2 is an array and handle it
         if (responses.question2 && Array.isArray(responses.question2)) {
-            console.log("question2 is an array, value:", responses.question2);
             responses.question2 = responses.question2[0];  // Or handle the array differently
         }
-
-        // Print the responses after modification
-        console.log("Modified responses:", responses);
 
         // Find the user and update their questionnaire responses
         const user = await User.findByIdAndUpdate(
