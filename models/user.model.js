@@ -9,8 +9,7 @@ const UserSchema = mongoose.Schema(
         email: { type: String, required: true, unique: true, lowercase: true },
         password: { type: String, required: true },
         isVerified: { type: Boolean, default: false },
-        verificationCode: { type: String }, // Store the verification code in DB
-        verificationExpires: { type: Date }, // Expiry timestamp for verification
+        hasCompletedQuestionnaire: { type: Boolean, default: false },
         coins: { type: Number, default: 0 },
         lives: { type: Number, default: 4 },
         badges: [{ type: String }],
@@ -32,20 +31,15 @@ const UserSchema = mongoose.Schema(
         nextLifeRegeneration: { type: Date, default: function () { return new Date(Date.now() + 60 * 1000); } },
         lastlogin: { type: Date, default: Date.now },
         loginStreak: { type: Number, default: 0 },
-        streakDays:{
-            type:[Boolean],
-            default: [false, false, false, false, false, false, false]
-        },
         tokenVersion: { type: Number, default: 0 }
     },
     { timestamps: true }
 );
 
-// ✅ Automatically hash password before saving
+// Automatically hash password before saving
 UserSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
 
-    console.log("🔍 Hashing password before saving...");
     this.password = await argon2.hash(this.password, {
         type: argon2.argon2id,
         memoryCost: 2 ** 16,
@@ -53,7 +47,6 @@ UserSchema.pre('save', async function (next) {
         parallelism: 2,
     });
 
-    console.log("✅ Password hashed successfully.");
     next();
 });
 
