@@ -4,7 +4,7 @@
   "description": "This is the backend to the CoinWa Financial literacy app. It will use node.js, express.js and mongoDB",
   "main": "index.js",
   "scripts": {
-    "test": "echo "Error: no test specified" && exit 1",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "serve": "node index.js",
     "dev": "nodemon index.js"
   },
