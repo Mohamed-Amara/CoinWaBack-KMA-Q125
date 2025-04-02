@@ -92,25 +92,47 @@ exports.updateStreak = async (req, res) => {
         const user = await User.findById(req.user.id).select('-password'); // Exclude password
 
         if (!user) {
+            console.log('User not found');
             return res.status(404).json({ message: 'User not found' }); // Handle user not found
         }
 
         const today = moment().startOf('day');
         const yesterday = moment().subtract(1, 'days').startOf('day');
-        const lastLogin = moment(user.lastlogin).startOf('day');;
+        const lastLogin = moment(user.lastlogin).startOf('day');
+        // Get today's index (Monday = 0, Sunday = 6)
+        let todayIndex = today.isoWeekday() - 1;
+        if (todayIndex === -1) todayIndex = 6; // Adjust for Sunday being the last index
+
+        let streakDays = user.streakDays || [false, false, false, false, false, false, false];
+
+        moment.updateLocale('en', {
+            week: { dow: 1 } // dow = 1 means Monday
+        });
+        
+        if (!lastLogin.isSame(today, 'week')) {
+            console.log('New week detected, resetting streakDays');
+            streakDays = [false, false, false, false, false, false, false];
+        }
+
+        streakDays[todayIndex] = true;
+        user.streakDays = streakDays;
 
 
         if (lastLogin.isSame(today, 'day')) {
-            // console.log('User already logged in today');
+            console.log('User already logged in today');
         } else if (lastLogin.isSame(yesterday, 'day')) { // Check if the last login was yesterday
             user.loginStreak += 1; // Increment if consecutive logins
+            console.log('Streak incremented to', user.loginStreak);
         } else {
             user.loginStreak = 1; // Reset streak to 1 if not consecutive
+            console.log('Streak reset to 1');
         }
 
         user.lastlogin = Date.now(); // Update last login time
 
         await user.save();
+
+        console.log('Updated Last Login:', user.lastLogin);
 
         res.status(200).json({ message: 'Streak updated successfully', user });
     } catch (err) {
